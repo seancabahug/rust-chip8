@@ -1,0 +1,1 @@
+cargo run -- '.\roms\Space Invaders [David Winter].ch8'

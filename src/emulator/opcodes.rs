@@ -1,0 +1,100 @@
+#[derive(Debug)]
+pub enum Opcode {
+    Unknown,
+    JumpToMachineCodeRoutine { addr: usize },
+    Clear,
+    Return,
+    Jump { addr: usize },
+    Call { addr: usize },
+    SkipIfEqValue { vx: usize, value: u8 },
+    SkipIfNotEqValue { vx: usize, value: u8 },
+    SkipIfEqRegister { vx: usize, vy: usize },
+    SetValue { vx: usize, value: u8 },
+    AddValue { vx: usize, value: u8 },
+    SetFromRegister { vx: usize, vy: usize },
+    BitwiseOr { vx: usize, vy: usize },
+    BitwiseAnd { vx: usize, vy: usize },
+    BitwiseXor { vx: usize, vy: usize },
+    Add { vx: usize, vy: usize },
+    Subtract { vx: usize, vy: usize },
+    BitwiseShiftRight { vx: usize },
+    SubtractReversed { vx: usize, vy: usize },
+    BitwiseShiftLeft { vx: usize },
+    SkipIfNotEqRegister { vx: usize, vy: usize },
+    SetI { value: usize },
+    JumpPlusV0 { addr: usize },
+    Random { vx: usize, and_with: u8 },
+    Draw { vx: usize, vy: usize, n: usize },
+    SkipIfKeyPressed { vx: usize },
+    SkipIfKeyNotPressed { vx: usize },
+    GetDelayTimerValue { vx: usize },
+    WaitForKeyPress { vx: usize },
+    SetDelayTimerFromRegister { vx: usize },
+    SetSoundTimerFromRegister { vx: usize },
+    AddIFromRegister { vx: usize },
+    SetIToDigitSpriteLocation { vx: usize },
+    StoreBCD { vx: usize },
+    StoreRegistersInMemory { vx: usize },
+    ReadRegistersFromMemory { vx: usize },
+}
+
+pub fn translate_instruction(instruction: usize) -> Opcode {
+    let nnn = instruction & 0xFFF;
+    let n = instruction & 0xF;
+    let x = (instruction >> 8) & 0xF;
+    let y = (instruction >> 4) & 0xF;
+    let kk = (instruction & 0xFF) as u8;
+
+    match instruction >> 12 {
+        0x0 => match nnn {
+            0x0E0 => Opcode::Clear,
+            0x0EE => Opcode::Return,
+            _ => Opcode::JumpToMachineCodeRoutine { addr: nnn },
+        },
+        0x1 => Opcode::Jump { addr: nnn },
+        0x2 => Opcode::Call { addr: nnn },
+        0x3 => Opcode::SkipIfEqValue { vx: x, value: kk },
+        0x4 => Opcode::SkipIfNotEqValue { vx: x, value: kk },
+        0x5 => Opcode::SkipIfEqRegister { vx: x, vy: y },
+        0x6 => Opcode::SetValue { vx: x, value: kk },
+        0x7 => Opcode::AddValue { vx: x, value: kk },
+        0x8 => match n {
+            0x0 => Opcode::SetFromRegister { vx: x, vy: y },
+            0x1 => Opcode::BitwiseOr { vx: x, vy: y },
+            0x2 => Opcode::BitwiseAnd { vx: x, vy: y },
+            0x3 => Opcode::BitwiseXor { vx: x, vy: y },
+            0x4 => Opcode::Add { vx: x, vy: y },
+            0x5 => Opcode::Subtract { vx: x, vy: y },
+            0x6 => Opcode::BitwiseShiftRight { vx: x },
+            0x7 => Opcode::SubtractReversed { vx: x, vy: y },
+            0xE => Opcode::BitwiseShiftLeft { vx: x },
+            _ => Opcode::Unknown,
+        },
+        0x9 => Opcode::SkipIfNotEqRegister { vx: x, vy: y },
+        0xA => Opcode::SetI { value: nnn },
+        0xB => Opcode::JumpPlusV0 { addr: nnn },
+        0xC => Opcode::Random {
+            vx: x,
+            and_with: kk,
+        },
+        0xD => Opcode::Draw { vx: x, vy: y, n },
+        0xE => match kk {
+            0x9E => Opcode::SkipIfKeyPressed { vx: x },
+            0xA1 => Opcode::SkipIfKeyNotPressed { vx: x },
+            _ => Opcode::Unknown,
+        },
+        0xF => match kk {
+            0x07 => Opcode::GetDelayTimerValue { vx: x },
+            0x0A => Opcode::WaitForKeyPress { vx: x },
+            0x15 => Opcode::SetDelayTimerFromRegister { vx: x },
+            0x18 => Opcode::SetSoundTimerFromRegister { vx: x },
+            0x1E => Opcode::AddIFromRegister { vx: x },
+            0x29 => Opcode::SetIToDigitSpriteLocation { vx: x },
+            0x33 => Opcode::StoreBCD { vx: x },
+            0x55 => Opcode::StoreRegistersInMemory { vx: x },
+            0x65 => Opcode::ReadRegistersFromMemory { vx: x },
+            _ => Opcode::Unknown,
+        },
+        _ => Opcode::Unknown,
+    }
+}
