@@ -130,6 +130,28 @@ impl Emulator {
 
                 self.v[0xF] = if unset_occurred { 1 } else { 0 }
             }
+            AddIFromRegister { vx } => self.i += self.v[vx] as usize,
+            StoreBCD { vx } => {
+                let digits = self.v[vx]
+                    .to_string()
+                    .chars()
+                    .map(|x| x.to_digit(10).unwrap() as u8)
+                    .collect::<Vec<u8>>();
+
+                for x in 0..3 {
+                    self.ram[self.i + x] = digits[x];
+                }
+            }
+            StoreRegistersInMemory { vx } => {
+                for x in 0..=vx {
+                    self.ram[self.i + x] = self.v[x]
+                }
+            }
+            ReadRegistersFromMemory { vx } => {
+                for x in 0..=vx {
+                    self.v[x] = self.ram[self.i + x]
+                }
+            }
             _ => println!("UNIMPLEMENTED: {:?}", opcode),
         }
 
