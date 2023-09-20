@@ -41,6 +41,7 @@ fn main() {
 
         if current_time > time_since_last_frame_update + DISPLAY_TIME_PER_UPDATE {
             display.draw_frame(&emulator);
+            emulator.decrement_delay_timer();
             time_since_last_frame_update = current_time;
         }
     }

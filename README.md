@@ -22,8 +22,8 @@ cargo run -- ./roms/1-chip8-logo.ch8
 
 - [x] `./test_logo` runs and logo is displayed correctly
 - [x] All opcode tests pass according to `./test_opcodes`
-- [ ] Inputs are functional according to `./test_keypad`
-- [ ] SPACE INVADERS WORKS!!
+- [x] Inputs are functional according to `./test_keypad`
+- [ ] SPACE INVADERS WORKS!! (with visuals, inputs, audio, etc.)
 
 ## Post-completion Nice-to-haves
 

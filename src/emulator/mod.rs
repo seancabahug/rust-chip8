@@ -15,6 +15,7 @@ pub struct Emulator {
     sp: usize,
     stack: [usize; STACK_CAPACITY],
     framebuffer: Framebuffer,
+    input_buffer: [bool; 16],
 }
 
 impl Emulator {
@@ -29,6 +30,7 @@ impl Emulator {
             sp: 0,
             stack: [0; STACK_CAPACITY],
             framebuffer: [[false; CHIP8_WIDTH as usize]; CHIP8_HEIGHT as usize],
+            input_buffer: [false; 16],
         };
 
         // Loading font set into memory
@@ -46,6 +48,16 @@ impl Emulator {
 
     pub fn get_framebuffer(&self) -> Framebuffer {
         self.framebuffer
+    }
+
+    pub fn set_key_state(&mut self, key: usize, pressed: bool) {
+        self.input_buffer[key] = pressed;
+    }
+
+    pub fn decrement_delay_timer(&mut self) {
+        if self.delay_timer > 0 {
+            self.delay_timer -= 1;
+        }
     }
 
     pub fn next_instruction(&mut self) {
@@ -150,6 +162,33 @@ impl Emulator {
             ReadRegistersFromMemory { vx } => {
                 for x in 0..=vx {
                     self.v[x] = self.ram[self.i + x]
+                }
+            }
+            GetDelayTimerValue { vx } => self.v[vx] = self.delay_timer,
+            SetDelayTimerFromRegister { vx } => self.delay_timer = self.v[vx],
+            WaitForKeyPress { vx } => {
+                let mut key_pressed = false;
+
+                for i in 0..self.input_buffer.len() {
+                    if self.input_buffer[i] {
+                        self.v[vx] = i as u8;
+                        key_pressed = true;
+                    }
+                }
+
+                if !key_pressed {
+                    self.pc -= 2;
+                }
+            }
+            SetIToDigitSpriteLocation { vx } => self.i = self.v[vx] as usize * 5,
+            SkipIfKeyPressed { vx } => {
+                if self.input_buffer[self.v[vx] as usize] {
+                    self.pc += 2
+                }
+            }
+            SkipIfKeyNotPressed { vx } => {
+                if !self.input_buffer[self.v[vx] as usize] {
+                    self.pc += 2
                 }
             }
             _ => println!("UNIMPLEMENTED: {:?}", opcode),
