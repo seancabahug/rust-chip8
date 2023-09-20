@@ -54,10 +54,18 @@ impl Emulator {
         self.input_buffer[key] = pressed;
     }
 
-    pub fn decrement_delay_timer(&mut self) {
+    pub fn decrement_timers(&mut self) {
         if self.delay_timer > 0 {
             self.delay_timer -= 1;
         }
+
+        if self.sound_timer > 0 {
+            self.sound_timer -= 1;
+        }
+    }
+
+    pub fn get_sound_timer(&self) -> u8 {
+        self.sound_timer
     }
 
     pub fn next_instruction(&mut self) {
@@ -190,6 +198,9 @@ impl Emulator {
                 if !self.input_buffer[self.v[vx] as usize] {
                     self.pc += 2
                 }
+            }
+            SetSoundTimerFromRegister { vx } => {
+                self.sound_timer = self.v[vx];
             }
             _ => println!("UNIMPLEMENTED: {:?}", opcode),
         }

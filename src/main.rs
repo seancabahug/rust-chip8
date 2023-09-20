@@ -6,6 +6,7 @@ use std::{env, fs, time::SystemTime};
 
 use config::{CPU_TIME_PER_INSTRUCTION, DISPLAY_TIME_PER_UPDATE};
 use emulator::Emulator;
+use interfaces::audio::Audio;
 use interfaces::display::Display;
 use interfaces::input::Input;
 
@@ -23,6 +24,7 @@ fn main() {
     let mut emulator = Emulator::init(rom);
     let mut display = Display::init(&sdl_context);
     let mut input = Input::init(&sdl_context);
+    let mut audio = Audio::init(&sdl_context);
 
     let mut time_since_last_instruction = SystemTime::now();
     let mut time_since_last_frame_update = SystemTime::now();
@@ -41,7 +43,14 @@ fn main() {
 
         if current_time > time_since_last_frame_update + DISPLAY_TIME_PER_UPDATE {
             display.draw_frame(&emulator);
-            emulator.decrement_delay_timer();
+
+            if emulator.get_sound_timer() > 0 && !audio.is_playing() {
+                audio.play_beep();
+            } else if emulator.get_sound_timer() == 0 && audio.is_playing() {
+                audio.pause_beep();
+            }
+
+            emulator.decrement_timers();
             time_since_last_frame_update = current_time;
         }
     }

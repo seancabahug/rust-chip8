@@ -36,3 +36,6 @@ pub const FONT_SET: [u8; 80] = [
     0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
     0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 ];
+
+pub const BEEP_FREQUENCY_HZ: i32 = 44100;
+pub const BEEP_VOLUME: f32 = 0.1;
