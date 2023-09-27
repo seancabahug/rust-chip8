@@ -2,6 +2,7 @@ pub mod opcodes;
 
 use self::opcodes::translate_instruction;
 use crate::config::*;
+use rand::{rngs::ThreadRng, Rng};
 
 type Framebuffer = [[bool; CHIP8_WIDTH as usize]; CHIP8_HEIGHT as usize];
 
@@ -16,6 +17,7 @@ pub struct Emulator {
     stack: [usize; STACK_CAPACITY],
     framebuffer: Framebuffer,
     input_buffer: [bool; 16],
+    rng: ThreadRng,
 }
 
 impl Emulator {
@@ -31,6 +33,7 @@ impl Emulator {
             stack: [0; STACK_CAPACITY],
             framebuffer: [[false; CHIP8_WIDTH as usize]; CHIP8_HEIGHT as usize],
             input_buffer: [false; 16],
+            rng: rand::thread_rng(),
         };
 
         // Loading font set into memory
@@ -152,8 +155,7 @@ impl Emulator {
             }
             AddIFromRegister { vx } => self.i += self.v[vx] as usize,
             StoreBCD { vx } => {
-                let digits = self.v[vx]
-                    .to_string()
+                let digits = format!("{:03}", self.v[vx])
                     .chars()
                     .map(|x| x.to_digit(10).unwrap() as u8)
                     .collect::<Vec<u8>>();
@@ -202,7 +204,10 @@ impl Emulator {
             SetSoundTimerFromRegister { vx } => {
                 self.sound_timer = self.v[vx];
             }
-            _ => println!("UNIMPLEMENTED: {:?}", opcode),
+            JumpToMachineCodeRoutine { addr } => println!("Got SYS to {:?}", addr),
+            JumpPlusV0 { addr } => self.pc = addr + self.v[0] as usize,
+            Random { vx, and_with } => self.v[vx] = self.rng.gen_range(0..255) & and_with,
+            Unknown => println!("UNKNOWN OPCODE: {:?} ", opcode),
         }
 
         self.pc += 2;
